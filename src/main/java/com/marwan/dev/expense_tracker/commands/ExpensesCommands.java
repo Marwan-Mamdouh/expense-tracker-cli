@@ -34,9 +34,17 @@ public class ExpensesCommands {
   @Command(command = "add", description = "add new expense")
   public String addExpense(
       @Option(longNames = "description", shortNames = 'd', required = true, description = "describe the expense") String description,
-      @Option(longNames = "amount", shortNames = 'a', required = true, description = "how much this cost you?") double amount) {
-    return String.format("Expense added successfully (ID: %d)",
-        addExpenseService.execute(new CreateExpenseDTO(description, amount)).getId());
+      @Option(longNames = "amount", shortNames = 'a', required = true, description = "how much this cost you?") double amount,
+      @Option(longNames = "category", shortNames = 'c', required = true, description = "put your "
+          + "expenses into a categories for better filtering, categories are {FOOD, FRUITS, "
+          + "INTERNET_BILL, TELEPHONE_BILL, ELECTRICITY_BILL, WATER_bill, GAS_BILL, "
+          + "CLEANING_AND_GARBAGE, DEBTS, OTHER}") String category) {
+    try {
+      return String.format("Expense added successfully (ID: %d)",
+          addExpenseService.execute(new CreateExpenseDTO(description, amount, category)).getId());
+    } catch (Exception e) {
+      return e.getMessage();
+    }
   }
 
   @Command(command = "delete", description = "delete expense by id")
@@ -72,7 +80,9 @@ public class ExpensesCommands {
 
   private StringBuilder tableHeader() {
     final StringBuilder result = new StringBuilder();
-    result.append(String.format("%-4s %-12s %-20s %10s%n", "ID", "Date", "Description", "Amount"));
+    result.append(
+        String.format("%-4s %-12s %-12s %-20s %10s%n", "ID", "Date", "Category", "Description",
+            "Amount"));
     return result;
   }
 }
