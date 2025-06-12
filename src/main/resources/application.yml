@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: expense-tracker
+  main:
+    banner-mode: OFF
+  shell:
+    command:
+      version:
+        enabled: true
+        show-build-version: true
+
+logging:
+  pattern:
+    console:
