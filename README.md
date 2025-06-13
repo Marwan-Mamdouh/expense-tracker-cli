@@ -62,7 +62,7 @@ note: `also know that you can write Categories capital or small case the cli wil
 
 3. Run the application:
    ```bash
-   java -jar target/expense-tracker-1.0-alpha.jar
+   java -jar target/expense-tracker-1.1-alpha.jar
    ```
 
 ### Option 3: Native Executable (Advanced)
