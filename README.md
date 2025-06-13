@@ -44,7 +44,7 @@ note: `also know that you can write Categories capital or small case the cli wil
 1. Download the latest JAR file from the repository
 2. Run the application:
    ```bash
-   java -jar expense-tracker-1.0-alpha.jar
+   java -jar expense-tracker-1.1-alpha.jar
    ```
 
 ### Option 2: Building from Source
@@ -162,21 +162,21 @@ version
 
 ```bash
 # Add some expenses
-java -jar expense-tracker-1.0-alpha.jar add -d "Weekly groceries" -a 85.50 -c FOOD
-java -jar expense-tracker-1.0-alpha.jar add -d "Electric bill" -a 120.00 -c ELECTRICITY_BILL
-java -jar expense-tracker-1.0-alpha.jar add -d "Morning coffee" -a 4.25 -c FOOD
+java -jar expense-tracker-1.1-alpha.jar add -d "Weekly groceries" -a 85.50 -c FOOD
+java -jar expense-tracker-1.1-alpha.jar add -d "Electric bill" -a 120.00 -c ELECTRICITY_BILL
+java -jar expense-tracker-1.1-alpha.jar add -d "Morning coffee" -a 4.25 -c FOOD
 
 # View all expenses
-java -jar expense-tracker-1.0-alpha.jar list
+java -jar expense-tracker-1.1-alpha.jar list
 
 # Get total summary
-java -jar expense-tracker-1.0-alpha.jar summery
+java -jar expense-tracker-1.1-alpha.jar summery
 
 # View expenses for current month only
-java -jar expense-tracker-1.0-alpha.jar list -m 6
+java -jar expense-tracker-1.1-alpha.jar list -m 6
 
 # Delete an expense by ID
-java -jar expense-tracker-1.0-alpha.jar delete -i 2
+java -jar expense-tracker-1.1-alpha.jar delete -i 2
 ```
 
 ## Development
