@@ -2,7 +2,9 @@ package com.marwan.dev.expense_tracker.repository;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.marwan.dev.expense_tracker.model.Category;
 import com.marwan.dev.expense_tracker.model.Expense;
+import com.marwan.dev.expense_tracker.model.dto.SearchArgsForList;
 import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
@@ -83,6 +85,30 @@ public class ExpenseRepository {
     }
   }
 
+  public ArrayList<Expense> findByCategory(Category category) {
+    lock.readLock().lock();
+    try {
+      final ArrayList<Expense> expenses = readExpenseFromFile();
+      return expenses.stream().filter(expense -> expense.getCategory().equals(category))
+          .collect(Collectors.toCollection(ArrayList::new));
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
+
+  public ArrayList<Expense> findByMonthAndCategory(SearchArgsForList args) {
+    lock.readLock().lock();
+    try {
+      final ArrayList<Expense> expenses = readExpenseFromFile();
+      return expenses.stream().filter(
+              expense -> expense.getCategory().equals(Category.from(args.category())) && args.month()
+                  .equals(expense.getCreatedAt().getMonthValue()))
+          .collect(Collectors.toCollection(ArrayList::new));
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
+
   public Double summeryAll() {
     lock.readLock().lock();
     try {
@@ -102,9 +128,32 @@ public class ExpenseRepository {
       lock.readLock().unlock();
     }
   }
-  // i want an elegant way to write things down in a json file after compile a native version of my java app bc when i make a native version there is no place call app,
-  //
-  //ask me if i am not very clear of what i want, and answer me when you have time
+
+  public Double summeryByCategory(Category category) {
+    lock.readLock().lock();
+    try {
+      final ArrayList<Expense> expenses = readExpenseFromFile();
+      return expenses.stream().filter(expense -> expense.getCategory().equals(category))
+          .mapToDouble(Expense::getAmount).sum();
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
+
+  public Double summeryByMonthAndCategory(SearchArgsForList args) {
+    lock.readLock().lock();
+    try {
+      return readExpenseFromFile().stream().filter(
+              expense -> args.month().equals(expense.getCreatedAt().getMonthValue())
+                  && expense.getCategory().equals(Category.from(args.category())))
+          .mapToDouble(Expense::getAmount).sum();
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
+  // I want an elegant way to write things down in a json file after compile a native version of
+  // my java app bc when I make a native version there is no place call app,
+  //ask me if I am not very clear of what I want, and answer me when you have time
 
   public void deleteById(Integer id) {
     lock.writeLock().lock();
