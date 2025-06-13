@@ -11,7 +11,7 @@
   </parent>
   <groupId>com.marwan.dev</groupId>
   <artifactId>expense-tracker</artifactId>
-  <version>1.0-alpha</version>
+  <version>1.1-alpha</version>
   <name>expense-tracker</name>
   <description>Demo expense tracker project built with Spring Boot and spring shell</description>
   <url/>
