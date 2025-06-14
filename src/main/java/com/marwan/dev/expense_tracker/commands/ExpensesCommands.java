@@ -1,12 +1,12 @@
 package com.marwan.dev.expense_tracker.commands;
 
-import com.marwan.dev.expense_tracker.model.Expense;
-import com.marwan.dev.expense_tracker.model.dto.CreateExpenseDTO;
-import com.marwan.dev.expense_tracker.model.dto.SearchArgsForList;
-import com.marwan.dev.expense_tracker.services.AddExpenseService;
-import com.marwan.dev.expense_tracker.services.DeleteExpenseService;
-import com.marwan.dev.expense_tracker.services.ListService;
-import com.marwan.dev.expense_tracker.services.SummeryService;
+import com.marwan.dev.expense_tracker.domain.expense.model.Expense;
+import com.marwan.dev.expense_tracker.domain.expense.model.dto.CreateExpenseRequest;
+import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
+import com.marwan.dev.expense_tracker.domain.expense.service.AddExpenseService;
+import com.marwan.dev.expense_tracker.domain.expense.service.DeleteExpenseService;
+import com.marwan.dev.expense_tracker.domain.expense.service.ListExpensesService;
+import com.marwan.dev.expense_tracker.domain.expense.service.SummeryExpensesService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -20,12 +20,12 @@ public class ExpensesCommands {
 
   private final AddExpenseService addExpenseService;
   private final DeleteExpenseService deleteExpenseService;
-  private final ListService listService;
-  private final SummeryService summeryService;
+  private final ListExpensesService listService;
+  private final SummeryExpensesService summeryService;
 
   public ExpensesCommands(AddExpenseService addExpenseService,
-      DeleteExpenseService deleteExpenseService, ListService listAllExpenseService,
-      SummeryService summeryAllExpensesService) {
+      DeleteExpenseService deleteExpenseService, ListExpensesService listAllExpenseService,
+      SummeryExpensesService summeryAllExpensesService) {
     this.addExpenseService = addExpenseService;
     this.deleteExpenseService = deleteExpenseService;
     this.listService = listAllExpenseService;
@@ -42,7 +42,7 @@ public class ExpensesCommands {
           + "CLEANING_AND_GARBAGE, DEBTS, OTHER}") String category) {
     try {
       return String.format("Expense added successfully (ID: %d)",
-          addExpenseService.execute(new CreateExpenseDTO(description, amount, category)).getId());
+          addExpenseService.execute(new CreateExpenseRequest(description, amount, category)).getId());
     } catch (Exception e) {
       return e.getMessage();
     }
