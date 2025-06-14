@@ -1,11 +1,11 @@
-package com.marwan.dev.expense_tracker.model;
+package com.marwan.dev.expense_tracker.domain.expense.model;
 
 import com.marwan.dev.expense_tracker.exceptions.NotFoundCategoryException;
 
 public enum Category {
   FOOD, FRUITS, INTERNET_BILL, TELEPHONE_BILL, ELECTRICITY_BILL, WATER_bill, GAS_BILL, CLEANING, GARBAGE, DEBTS, OTHER;
 
-  public static Category from(String category) {
+  public static Category from(java.lang.String category) {
     return switch (category.toUpperCase()) {
       case "FOOD" -> Category.FOOD;
       case "FRUITS" -> Category.FRUITS;

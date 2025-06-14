@@ -1,4 +1,4 @@
-package com.marwan.dev.expense_tracker.model;
+package com.marwan.dev.expense_tracker.domain.expense.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -1,4 +1,4 @@
-package com.marwan.dev.expense_tracker.services;
+package com.marwan.dev.expense_tracker;
 
 public interface CommandInterface<I, O> {
 

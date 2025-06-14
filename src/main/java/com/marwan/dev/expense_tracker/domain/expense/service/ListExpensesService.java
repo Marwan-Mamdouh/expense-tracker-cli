@@ -1,18 +1,19 @@
-package com.marwan.dev.expense_tracker.services;
+package com.marwan.dev.expense_tracker.domain.expense.service;
 
-import com.marwan.dev.expense_tracker.model.Category;
-import com.marwan.dev.expense_tracker.model.Expense;
-import com.marwan.dev.expense_tracker.model.dto.SearchArgsForList;
-import com.marwan.dev.expense_tracker.repository.ExpenseRepository;
+import com.marwan.dev.expense_tracker.CommandInterface;
+import com.marwan.dev.expense_tracker.domain.expense.model.Category;
+import com.marwan.dev.expense_tracker.domain.expense.model.Expense;
+import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
+import com.marwan.dev.expense_tracker.domain.expense.repository.ExpenseRepository;
 import java.util.ArrayList;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ListService implements CommandInterface<SearchArgsForList, ArrayList<Expense>> {
+public class ListExpensesService implements CommandInterface<SearchArgsForList, ArrayList<Expense>> {
 
   private final ExpenseRepository expenseRepository;
 
-  public ListService(ExpenseRepository expenseRepository) {
+  public ListExpensesService(ExpenseRepository expenseRepository) {
     this.expenseRepository = expenseRepository;
   }
 

@@ -1,10 +1,10 @@
-package com.marwan.dev.expense_tracker.repository;
+package com.marwan.dev.expense_tracker.domain.expense.repository;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.marwan.dev.expense_tracker.model.Category;
-import com.marwan.dev.expense_tracker.model.Expense;
-import com.marwan.dev.expense_tracker.model.dto.SearchArgsForList;
+import com.marwan.dev.expense_tracker.domain.expense.model.Category;
+import com.marwan.dev.expense_tracker.domain.expense.model.Expense;
+import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
 import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +21,8 @@ public class ExpenseRepository {
   private static int maxId = 0;
   private final ReadWriteLock lock;
   private final ObjectMapper objectMapper;
-  private final String filePath = System.getProperty("user.home") + "/expense.json";
+  private final String filePath = String.format("%s/expense-tracker/expense.json",
+      System.getProperty("user.home"));
 
   public ExpenseRepository(ObjectMapper objectMapper, ReadWriteLock lock) {
     this.objectMapper = objectMapper;
@@ -217,7 +218,7 @@ public class ExpenseRepository {
       file.getParentFile().mkdirs();
       objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, expenses);
     } catch (IOException e) {
-      throw new RuntimeException("Error writing tasks to file: ", e);
+      throw new RuntimeException("Error writing expenses to file: ", e);
     }
   }
 }

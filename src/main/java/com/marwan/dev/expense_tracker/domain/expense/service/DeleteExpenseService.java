@@ -1,6 +1,7 @@
-package com.marwan.dev.expense_tracker.services;
+package com.marwan.dev.expense_tracker.domain.expense.service;
 
-import com.marwan.dev.expense_tracker.repository.ExpenseRepository;
+import com.marwan.dev.expense_tracker.CommandInterface;
+import com.marwan.dev.expense_tracker.domain.expense.repository.ExpenseRepository;
 import org.springframework.stereotype.Service;
 
 @Service

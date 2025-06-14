@@ -1,16 +1,17 @@
-package com.marwan.dev.expense_tracker.services;
+package com.marwan.dev.expense_tracker.domain.expense.service;
 
-import com.marwan.dev.expense_tracker.model.Category;
-import com.marwan.dev.expense_tracker.model.dto.SearchArgsForList;
-import com.marwan.dev.expense_tracker.repository.ExpenseRepository;
+import com.marwan.dev.expense_tracker.CommandInterface;
+import com.marwan.dev.expense_tracker.domain.expense.model.Category;
+import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
+import com.marwan.dev.expense_tracker.domain.expense.repository.ExpenseRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SummeryService implements CommandInterface<SearchArgsForList, Double> {
+public class SummeryExpensesService implements CommandInterface<SearchArgsForList, Double> {
 
   private final ExpenseRepository expenseRepository;
 
-  public SummeryService(ExpenseRepository expenseRepository) {
+  public SummeryExpensesService(ExpenseRepository expenseRepository) {
     this.expenseRepository = expenseRepository;
   }
 
