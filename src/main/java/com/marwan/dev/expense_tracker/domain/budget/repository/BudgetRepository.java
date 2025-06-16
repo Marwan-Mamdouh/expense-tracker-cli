@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;
 import org.springframework.stereotype.Repository;
@@ -28,91 +27,151 @@ public class BudgetRepository {
     this.lock = lock;
   }
 
+  /**
+   * Save a budget entry. If one exists for the same month and year, replace it.
+   *
+   * @param budget the budget to save
+   * @return the saved budget
+   */
   public Budget save(Budget budget) {
-    lock.writeLock().lock();
-    try {
-      final List<Budget> budgets = readBudgetFromFile();
-      final Optional<Budget> exitingBudget = budgets.stream().filter(
-              b -> b.getMonth().equals(budget.getMonth()) && b.getYear().equals(budget.getYear()))
-          .findFirst();
-      if (exitingBudget.isPresent()) {
-        updateExistingBudget(budget, budgets);
-      } else {
-        budgets.add(budget);
-      }
+    return withWriteLock(() -> {
+      List<Budget> budgets = readBudgetFromFile();
+      budgets.removeIf(b -> sameMonthAndYear(b, budget));
+      budgets.add(budget);
       writeBudgetToFile(budgets);
       return budget;
-    } finally {
-      lock.writeLock().unlock();
-    }
+    });
   }
 
+  /**
+   * Find a budget by month and year.
+   *
+   * @param month the month
+   * @param year  the year
+   * @return optional budget if found
+   */
   public Optional<Budget> findByMonthAndYear(Integer month, Integer year) {
     return withReadLock(() -> readBudgetFromFile().stream()
-        .filter(e -> e.getMonth().equals(month) && e.getYear().equals(year)).findFirst());
+        .filter(e -> e.getMonth().equals(month) && e.getYear().equals(year))
+        .findFirst());
   }
 
+  /**
+   * Find all budgets for a specific year.
+   *
+   * @param year the year
+   * @return list of budgets
+   */
   public List<Budget> findByYear(Integer year) {
-    return withReadLock(() -> readBudgetFromFile().stream().filter(e -> year.equals(e.getYear()))
+    return withReadLock(() -> readBudgetFromFile().stream()
+        .filter(e -> year.equals(e.getYear()))
         .collect(toList()));
   }
 
+  /**
+   * Delete budget for a specific month and year.
+   *
+   * @param month the month
+   * @param year  the year
+   */
   public void deleteByMonthAndYear(Integer month, Integer year) {
-    lock.writeLock().lock();
-    try {
-      final List<Budget> budgets = readBudgetFromFile();
-      budgets.removeIf(budget -> budget.getMonth().equals(month) && year.equals(budget.getYear()));
+    withWriteLock(() -> {
+      List<Budget> budgets = readBudgetFromFile();
+      budgets.removeIf(b -> b.getMonth().equals(month) && year.equals(b.getYear()));
       writeBudgetToFile(budgets);
-    } finally {
-      lock.writeLock().unlock();
-    }
+    });
   }
 
+  /**
+   * Delete all budget entries.
+   */
   public void deleteAll() {
-    lock.writeLock().lock();
-    try {
-      writeBudgetToFile(new ArrayList<>());
-    } finally {
-      lock.writeLock().unlock();
-    }
+    withWriteLock(() -> writeBudgetToFile(new ArrayList<>()));
   }
 
-
-  private void updateExistingBudget(Budget budget, List<Budget> budgets) {
-    budgets.removeIf(
-        b -> b.getMonth().equals(budget.getMonth()) && b.getYear().equals(budget.getYear()));
-    budgets.add(budget);
-  }
-
+  /**
+   * Utility: Read the list of budgets from the JSON file.
+   *
+   * @return list of budgets
+   */
   private List<Budget> readBudgetFromFile() {
     try {
-      final File file = new File(filePath);
+      File file = new File(filePath);
       if (!file.exists()) {
         return new ArrayList<>();
       }
-      return mapper.readValue(file, new TypeReference<ArrayList<Budget>>() {
+      return mapper.readValue(file, new TypeReference<>() {
       });
     } catch (IOException e) {
       throw new RuntimeException("Error reading from file", e);
     }
   }
 
+  /**
+   * Utility: Write the list of budgets to the JSON file.
+   *
+   * @param budgets list to write
+   */
   private void writeBudgetToFile(List<Budget> budgets) {
     try {
-      final File file = new File(filePath);
+      File file = new File(filePath);
       file.getParentFile().mkdirs();
       mapper.writerWithDefaultPrettyPrinter().writeValue(file, budgets);
     } catch (IOException e) {
-      throw new RuntimeException("Error writing personal config to file: ", e);
+      throw new RuntimeException("Error writing budgets to file", e);
     }
   }
 
+  /**
+   * Utility: Check if two budgets have the same month and year.
+   */
+  private boolean sameMonthAndYear(Budget a, Budget b) {
+    return a.getMonth().equals(b.getMonth()) && a.getYear().equals(b.getYear());
+  }
+
+  /**
+   * Execute work within a read lock.
+   *
+   * @param work function to execute
+   * @param <R>  return type
+   * @return result of work
+   */
   private <R> R withReadLock(Supplier<R> work) {
     lock.readLock().lock();
     try {
       return work.get();
     } finally {
       lock.readLock().unlock();
+    }
+  }
+
+  /**
+   * Execute work within a write lock.
+   *
+   * @param work function to execute
+   */
+  private void withWriteLock(Runnable work) {
+    lock.writeLock().lock();
+    try {
+      work.run();
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Execute work within a write lock and return a result.
+   *
+   * @param work function to execute
+   * @param <R>  return type
+   * @return result of work
+   */
+  private <R> R withWriteLock(Supplier<R> work) {
+    lock.writeLock().lock();
+    try {
+      return work.get();
+    } finally {
+      lock.writeLock().unlock();
     }
   }
 }
