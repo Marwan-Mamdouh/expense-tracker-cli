@@ -1,8 +1,10 @@
-package com.marwan.dev.expense_tracker.exceptions;
+package com.marwan.dev.expense_tracker.exceptions.expense;
 
-public class NotFoundCategoryException extends RuntimeException {
+import com.marwan.dev.expense_tracker.exceptions.ErrorMessage;
 
-  public NotFoundCategoryException(String wrongCategory) {
-    super("Category Not found for: " + wrongCategory);
+public class CategoryNotFoundException extends RuntimeException {
+
+  public CategoryNotFoundException(String wrongCategory) {
+    super(ErrorMessage.CATEGORY_NOT_FOUND.getMessage());
   }
 }
