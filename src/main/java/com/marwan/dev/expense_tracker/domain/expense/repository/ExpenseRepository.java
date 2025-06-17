@@ -1,5 +1,8 @@
 package com.marwan.dev.expense_tracker.domain.expense.repository;
 
+import static com.marwan.dev.expense_tracker.util.LockUtils.withReadLock;
+import static com.marwan.dev.expense_tracker.util.LockUtils.withWriteLock;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marwan.dev.expense_tracker.domain.expense.model.Category;
@@ -10,11 +13,15 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Repository for managing Expense data backed by a JSON file with thread-safe operations.
+ */
 @Repository
 public class ExpenseRepository {
 
@@ -24,24 +31,36 @@ public class ExpenseRepository {
   private final String filePath = String.format("%s/expense-tracker/expense.json",
       System.getProperty("user.home"));
 
+  /**
+   * Constructs a new ExpenseRepository instance.
+   *
+   * @param objectMapper the Jackson object mapper for JSON serialization
+   * @param lock         the read-write lock used for thread-safe operations
+   */
   public ExpenseRepository(ObjectMapper objectMapper, ReadWriteLock lock) {
     this.objectMapper = objectMapper;
     this.lock = lock;
   }
 
+  /**
+   * Initializes the max ID counter from the persisted expenses after bean construction.
+   */
   @PostConstruct
   public void initializeMaxId() {
-    final ArrayList<Expense> expenses = readExpenseFromFile();
+    final var expenses = readExpenseFromFile();
     maxId = expenses.stream().mapToInt(Expense::getId).max().orElse(0);
   }
 
+  /**
+   * Saves an expense. If the ID is zero or not found, a new ID is assigned.
+   *
+   * @param expense the expense to save
+   * @return the saved expense
+   */
   public Expense save(Expense expense) {
-    lock.writeLock().lock();
-    try {
-      final ArrayList<Expense> expenses = readExpenseFromFile();
-
-      final Optional<Expense> existingExpense = expenses.stream()
-          .filter(t -> t.getId().equals(expense.getId())).findFirst();
+    return withWriteLock(lock, () -> {
+      final var expenses = readExpenseFromFile();
+      final var existingExpense = findExpenseById(expenses, expense.getId());
 
       if (existingExpense.isPresent() && expense.getId() != 0) {
         updateExistingExpense(expense, expenses);
@@ -51,156 +70,136 @@ public class ExpenseRepository {
       }
       writeExpensesToFile(expenses);
       return expense;
-    } finally {
-      lock.writeLock().unlock();
-    }
+    });
   }
 
+  /**
+   * Finds an expense by ID.
+   */
   public Optional<Expense> findById(Integer id) {
-    lock.readLock().lock();
-    try {
-      final ArrayList<Expense> expenses = readExpenseFromFile();
-      return expenses.stream().filter(expense -> expense.getId().equals(id)).findFirst();
-    } finally {
-      lock.readLock().unlock();
-    }
+    return withReadLock(lock,
+        () -> readExpenseFromFile().stream().filter(expense -> expense.getId().equals(id))
+            .findFirst());
   }
 
-  public ArrayList<Expense> findAll() {
-    lock.readLock().lock();
-    try {
-      return readExpenseFromFile();
-    } finally {
-      lock.readLock().unlock();
-    }
+  /**
+   * Returns all saved expenses.
+   */
+  public List<Expense> findAll() {
+    return withReadLock(lock, this::readExpenseFromFile);
   }
 
-  public ArrayList<Expense> findByMonth(Integer month) {
-    lock.readLock().lock();
-    try {
-      final ArrayList<Expense> expenses = readExpenseFromFile();
-      return expenses.stream().filter(expense -> expense.getCreatedAt().getMonthValue() == month)
-          .collect(Collectors.toCollection(ArrayList::new));
-    } finally {
-      lock.readLock().unlock();
-    }
+  /**
+   * Finds expenses by month.
+   */
+  public List<Expense> findByMonth(Integer month) {
+    return findFiltered(expense -> month.equals(expense.getCreatedAt().getMonthValue()));
   }
 
-  public ArrayList<Expense> findByCategory(Category category) {
-    lock.readLock().lock();
-    try {
-      final ArrayList<Expense> expenses = readExpenseFromFile();
-      return expenses.stream().filter(expense -> expense.getCategory().equals(category))
-          .collect(Collectors.toCollection(ArrayList::new));
-    } finally {
-      lock.readLock().unlock();
-    }
+  /**
+   * Finds expenses by category.
+   */
+  public List<Expense> findByCategory(Category category) {
+    return findFiltered(expense -> expense.getCategory().equals(category));
   }
 
-  public ArrayList<Expense> findByMonthAndCategory(SearchArgsForList args) {
-    lock.readLock().lock();
-    try {
-      final ArrayList<Expense> expenses = readExpenseFromFile();
-      return expenses.stream().filter(
-              expense -> expense.getCategory().equals(Category.from(args.category())) && args.month()
-                  .equals(expense.getCreatedAt().getMonthValue()))
-          .collect(Collectors.toCollection(ArrayList::new));
-    } finally {
-      lock.readLock().unlock();
-    }
+  /**
+   * Finds expenses by both month and category.
+   */
+  public List<Expense> findByMonthAndCategory(SearchArgsForList args) {
+    return findFiltered(
+        expense -> expense.getCategory().equals(Category.from(args.category())) && args.month()
+            .equals(expense.getCreatedAt().getMonthValue()));
   }
 
+  /**
+   * Returns the total sum of all expenses.
+   */
   public Double summeryAll() {
-    lock.readLock().lock();
-    try {
-      return readExpenseFromFile().stream().mapToDouble(Expense::getAmount).sum();
-    } finally {
-      lock.readLock().unlock();
-    }
+    return sumFiltered(expense -> true);
   }
 
+  /**
+   * Returns the total sum of expenses filtered by month.
+   */
   public Double summeryByMonth(Integer month) {
-    lock.readLock().lock();
-    try {
-      return readExpenseFromFile().stream()
-          .filter(expense -> expense.getCreatedAt().getMonthValue() == month)
-          .mapToDouble(Expense::getAmount).sum();
-    } finally {
-      lock.readLock().unlock();
-    }
+    return sumFiltered(expense -> expense.getCreatedAt().getMonthValue() == month);
   }
 
+  /**
+   * Returns the total sum of expenses filtered by category.
+   */
   public Double summeryByCategory(Category category) {
-    lock.readLock().lock();
-    try {
-      final ArrayList<Expense> expenses = readExpenseFromFile();
-      return expenses.stream().filter(expense -> expense.getCategory().equals(category))
-          .mapToDouble(Expense::getAmount).sum();
-    } finally {
-      lock.readLock().unlock();
-    }
+    return sumFiltered(expense -> expense.getCategory().equals(category));
   }
 
+  /**
+   * Returns the total sum of expenses filtered by both month and category.
+   */
   public Double summeryByMonthAndCategory(SearchArgsForList args) {
-    lock.readLock().lock();
-    try {
-      return readExpenseFromFile().stream().filter(
-              expense -> args.month().equals(expense.getCreatedAt().getMonthValue())
-                  && expense.getCategory().equals(Category.from(args.category())))
-          .mapToDouble(Expense::getAmount).sum();
-    } finally {
-      lock.readLock().unlock();
-    }
+    return sumFiltered(expense -> args.month().equals(expense.getCreatedAt().getMonthValue())
+        && expense.getCategory().equals(Category.from(args.category())));
   }
-  // I want an elegant way to write things down in a json file after compile a native version of
-  // my java app bc when I make a native version there is no place call app,
-  //ask me if I am not very clear of what I want, and answer me when you have time
 
+  /**
+   * Deletes an expense by ID.
+   */
   public void deleteById(Integer id) {
-    lock.writeLock().lock();
-    try {
-      final ArrayList<Expense> expenses = readExpenseFromFile();
+    withWriteLock(lock, () -> {
+      final var expenses = readExpenseFromFile();
       expenses.removeIf(expense -> expense.getId().equals(id));
       writeExpensesToFile(expenses);
-    } finally {
-      lock.writeLock().unlock();
-    }
+    });
   }
 
+  /**
+   * Checks if an expense exists by its ID.
+   */
   public boolean existsById(Integer id) {
-    lock.readLock().lock();
-    try {
-      final ArrayList<Expense> expenses = readExpenseFromFile();
-      return expenses.stream().anyMatch(expense -> expense.getId().equals(id));
-    } finally {
-      lock.readLock().unlock();
-    }
+    return withReadLock(lock,
+        () -> readExpenseFromFile().stream().anyMatch(expense -> expense.getId().equals(id)));
   }
 
+  /**
+   * Deletes all expenses and resets the ID counter.
+   */
   public void deleteAll() {
-    lock.writeLock().lock();
-    try {
+    withWriteLock(lock, () -> {
       writeExpensesToFile(new ArrayList<>());
       maxId = 0;
-    } finally {
-      lock.writeLock().unlock();
-    }
+    });
   }
 
-  private ArrayList<Expense> readExpenseFromFile() {
+  // ================== PRIVATE HELPERS ==================
+
+  private List<Expense> readExpenseFromFile() {
     try {
-      final File file = new File(filePath);// TODO need to complete file path
+      final var file = new File(filePath);
       if (!file.exists()) {
         return new ArrayList<>();
       }
       return objectMapper.readValue(file, new TypeReference<ArrayList<Expense>>() {
       });
     } catch (IOException e) {
-      throw new RuntimeException("Error reading from file", e); // TODO: need to complete file path
+      throw new RuntimeException("Error reading from file", e);
     }
   }
 
-  private void updateExistingExpense(Expense expense, ArrayList<Expense> expenses) {
+  private Optional<Expense> findExpenseById(List<Expense> expenses, int id) {
+    return expenses.stream().filter(t -> t.getId().equals(id)).findFirst();
+  }
+
+  private List<Expense> findFiltered(Predicate<Expense> condition) {
+    return withReadLock(lock, () -> readExpenseFromFile().stream().filter(condition).toList());
+  }
+
+  private Double sumFiltered(Predicate<Expense> condition) {
+    return withReadLock(lock,
+        () -> readExpenseFromFile().stream().filter(condition).mapToDouble(Expense::getAmount)
+            .sum());
+  }
+
+  private void updateExistingExpense(Expense expense, List<Expense> expenses) {
     expenses.removeIf(t -> t.getId().equals(expense.getId()));
     expense.setUpdatedAt(LocalDate.now());
     expenses.add(expense);
@@ -212,9 +211,9 @@ public class ExpenseRepository {
     }
   }
 
-  private void writeExpensesToFile(ArrayList<Expense> expenses) {
+  private void writeExpensesToFile(List<Expense> expenses) {
     try {
-      final File file = new File(filePath); // TODO need to put file path
+      final var file = new File(filePath);
       file.getParentFile().mkdirs();
       objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, expenses);
     } catch (IOException e) {

@@ -1,17 +1,19 @@
 package com.marwan.dev.expense_tracker.domain.budget.repository;
 
+import static com.marwan.dev.expense_tracker.util.LockUtils.withReadLock;
+import static com.marwan.dev.expense_tracker.util.LockUtils.withWriteLock;
 import static java.util.stream.Collectors.toList;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marwan.dev.expense_tracker.domain.budget.model.Budget;
+import com.marwan.dev.expense_tracker.util.LockUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.function.Supplier;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -34,7 +36,7 @@ public class BudgetRepository {
    * @return the saved budget
    */
   public Budget save(Budget budget) {
-    return withWriteLock(() -> {
+    return withWriteLock(lock, () -> {
       List<Budget> budgets = readBudgetFromFile();
       budgets.removeIf(b -> sameMonthAndYear(b, budget));
       budgets.add(budget);
@@ -51,9 +53,8 @@ public class BudgetRepository {
    * @return optional budget if found
    */
   public Optional<Budget> findByMonthAndYear(Integer month, Integer year) {
-    return withReadLock(() -> readBudgetFromFile().stream()
-        .filter(e -> e.getMonth().equals(month) && e.getYear().equals(year))
-        .findFirst());
+    return withReadLock(lock, () -> readBudgetFromFile().stream()
+        .filter(e -> e.getMonth().equals(month) && e.getYear().equals(year)).findFirst());
   }
 
   /**
@@ -63,9 +64,9 @@ public class BudgetRepository {
    * @return list of budgets
    */
   public List<Budget> findByYear(Integer year) {
-    return withReadLock(() -> readBudgetFromFile().stream()
-        .filter(e -> year.equals(e.getYear()))
-        .collect(toList()));
+    return withReadLock(lock,
+        () -> readBudgetFromFile().stream().filter(e -> year.equals(e.getYear()))
+            .collect(toList()));
   }
 
   /**
@@ -75,7 +76,7 @@ public class BudgetRepository {
    * @param year  the year
    */
   public void deleteByMonthAndYear(Integer month, Integer year) {
-    withWriteLock(() -> {
+    LockUtils.withWriteLock(lock, () -> {
       List<Budget> budgets = readBudgetFromFile();
       budgets.removeIf(b -> b.getMonth().equals(month) && year.equals(b.getYear()));
       writeBudgetToFile(budgets);
@@ -86,7 +87,7 @@ public class BudgetRepository {
    * Delete all budget entries.
    */
   public void deleteAll() {
-    withWriteLock(() -> writeBudgetToFile(new ArrayList<>()));
+    withWriteLock(lock, () -> writeBudgetToFile(new ArrayList<>()));
   }
 
   /**
@@ -127,51 +128,5 @@ public class BudgetRepository {
    */
   private boolean sameMonthAndYear(Budget a, Budget b) {
     return a.getMonth().equals(b.getMonth()) && a.getYear().equals(b.getYear());
-  }
-
-  /**
-   * Execute work within a read lock.
-   *
-   * @param work function to execute
-   * @param <R>  return type
-   * @return result of work
-   */
-  private <R> R withReadLock(Supplier<R> work) {
-    lock.readLock().lock();
-    try {
-      return work.get();
-    } finally {
-      lock.readLock().unlock();
-    }
-  }
-
-  /**
-   * Execute work within a write lock.
-   *
-   * @param work function to execute
-   */
-  private void withWriteLock(Runnable work) {
-    lock.writeLock().lock();
-    try {
-      work.run();
-    } finally {
-      lock.writeLock().unlock();
-    }
-  }
-
-  /**
-   * Execute work within a write lock and return a result.
-   *
-   * @param work function to execute
-   * @param <R>  return type
-   * @return result of work
-   */
-  private <R> R withWriteLock(Supplier<R> work) {
-    lock.writeLock().lock();
-    try {
-      return work.get();
-    } finally {
-      lock.writeLock().unlock();
-    }
   }
 }
