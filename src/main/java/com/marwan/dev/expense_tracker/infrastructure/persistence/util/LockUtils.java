@@ -1,4 +1,4 @@
-package com.marwan.dev.expense_tracker.util;
+package com.marwan.dev.expense_tracker.infrastructure.persistence.util;
 
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;

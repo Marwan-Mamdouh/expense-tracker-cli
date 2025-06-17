@@ -1,4 +1,4 @@
-package com.marwan.dev.expense_tracker.exceptions;
+package com.marwan.dev.expense_tracker.shared.exceptions;
 
 import lombok.Getter;
 

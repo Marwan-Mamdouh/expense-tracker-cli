@@ -1,14 +1,15 @@
-package com.marwan.dev.expense_tracker.domain.expense.repository;
+package com.marwan.dev.expense_tracker.infrastructure.persistence.implementation;
 
-import static com.marwan.dev.expense_tracker.util.LockUtils.withReadLock;
-import static com.marwan.dev.expense_tracker.util.LockUtils.withWriteLock;
-import static com.marwan.dev.expense_tracker.util.ReadAndWriteUtil.readFromFile;
-import static com.marwan.dev.expense_tracker.util.ReadAndWriteUtil.writeToFile;
+import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.LockUtils.withReadLock;
+import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.LockUtils.withWriteLock;
+import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.ReadAndWriteUtil.readFromFile;
+import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.ReadAndWriteUtil.writeToFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marwan.dev.expense_tracker.domain.expense.model.Category;
 import com.marwan.dev.expense_tracker.domain.expense.model.Expense;
 import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
+import com.marwan.dev.expense_tracker.domain.expense.repository.ExpenseRepositoryI;
 import jakarta.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Repository;
  * Repository for managing Expense data backed by a JSON file with thread-safe operations.
  */
 @Repository
-public class ExpenseRepository {
+public class ExpenseRepository implements ExpenseRepositoryI {
 
   private static Integer maxId = 0;
   private final ReadWriteLock lock;
@@ -51,11 +52,21 @@ public class ExpenseRepository {
   }
 
   /**
+   * Checks if an expense exists by its ID.
+   */
+  @Override
+  public boolean existsById(Integer id) {
+    return withReadLock(lock,
+        () -> readExpenseFromFile().stream().anyMatch(expense -> expense.getId().equals(id)));
+  }
+
+  /**
    * Saves an expense. If the ID is zero or not found, a new ID is assigned.
    *
    * @param expense the expense to save
    * @return the saved expense
    */
+  @Override
   public Expense save(Expense expense) {
     return withWriteLock(lock, () -> {
       final var expenses = readExpenseFromFile();
@@ -75,6 +86,7 @@ public class ExpenseRepository {
   /**
    * Finds an expense by ID.
    */
+  @Override
   public Optional<Expense> findById(Integer id) {
     return withReadLock(lock,
         () -> readExpenseFromFile().stream().filter(expense -> expense.getId().equals(id))
@@ -84,6 +96,7 @@ public class ExpenseRepository {
   /**
    * Returns all saved expenses.
    */
+  @Override
   public List<Expense> findAll() {
     return withReadLock(lock, this::readExpenseFromFile);
   }
@@ -91,6 +104,7 @@ public class ExpenseRepository {
   /**
    * Finds expenses by month.
    */
+  @Override
   public List<Expense> findByMonth(Integer month) {
     return findFiltered(expense -> month.equals(expense.getCreatedAt().getMonthValue()));
   }
@@ -98,6 +112,7 @@ public class ExpenseRepository {
   /**
    * Finds expenses by category.
    */
+  @Override
   public List<Expense> findByCategory(Category category) {
     return findFiltered(expense -> expense.getCategory().equals(category));
   }
@@ -105,6 +120,7 @@ public class ExpenseRepository {
   /**
    * Finds expenses by both month and category.
    */
+  @Override
   public List<Expense> findByMonthAndCategory(SearchArgsForList args) {
     return findFiltered(
         expense -> expense.getCategory().equals(Category.from(args.category())) && args.month()
@@ -114,6 +130,7 @@ public class ExpenseRepository {
   /**
    * Returns the total sum of all expenses.
    */
+  @Override
   public Double summeryAll() {
     return sumFiltered(expense -> true);
   }
@@ -121,6 +138,7 @@ public class ExpenseRepository {
   /**
    * Returns the total sum of expenses filtered by month.
    */
+  @Override
   public Double summeryByMonth(Integer month) {
     return sumFiltered(expense -> expense.getCreatedAt().getMonthValue() == month);
   }
@@ -128,6 +146,7 @@ public class ExpenseRepository {
   /**
    * Returns the total sum of expenses filtered by category.
    */
+  @Override
   public Double summeryByCategory(Category category) {
     return sumFiltered(expense -> expense.getCategory().equals(category));
   }
@@ -135,6 +154,7 @@ public class ExpenseRepository {
   /**
    * Returns the total sum of expenses filtered by both month and category.
    */
+  @Override
   public Double summeryByMonthAndCategory(SearchArgsForList args) {
     return sumFiltered(expense -> args.month().equals(expense.getCreatedAt().getMonthValue())
         && expense.getCategory().equals(Category.from(args.category())));
@@ -143,6 +163,7 @@ public class ExpenseRepository {
   /**
    * Deletes an expense by ID.
    */
+  @Override
   public void deleteById(Integer id) {
     withWriteLock(lock, () -> {
       final var expenses = readExpenseFromFile();
@@ -152,16 +173,9 @@ public class ExpenseRepository {
   }
 
   /**
-   * Checks if an expense exists by its ID.
-   */
-  public boolean existsById(Integer id) {
-    return withReadLock(lock,
-        () -> readExpenseFromFile().stream().anyMatch(expense -> expense.getId().equals(id)));
-  }
-
-  /**
    * Deletes all expenses and resets the ID counter.
    */
+  @Override
   public void deleteAll() {
     withWriteLock(lock, () -> {
       writeExpensesToFile(new ArrayList<>());

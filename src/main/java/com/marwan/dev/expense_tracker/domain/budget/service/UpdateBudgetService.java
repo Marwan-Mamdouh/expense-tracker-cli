@@ -2,7 +2,7 @@ package com.marwan.dev.expense_tracker.domain.budget.service;
 
 import com.marwan.dev.expense_tracker.domain.budget.model.Budget;
 import com.marwan.dev.expense_tracker.domain.budget.model.dto.UpdateBudgetRequest;
-import com.marwan.dev.expense_tracker.domain.budget.repository.BudgetRepository;
+import com.marwan.dev.expense_tracker.infrastructure.persistence.implementation.BudgetRepository;
 import com.marwan.dev.expense_tracker.shared.CommandInterface;
 import org.springframework.stereotype.Service;
 
