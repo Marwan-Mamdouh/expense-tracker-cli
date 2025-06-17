@@ -1,9 +1,9 @@
 package com.marwan.dev.expense_tracker.domain.expense.service;
 
-import com.marwan.dev.expense_tracker.CommandInterface;
 import com.marwan.dev.expense_tracker.domain.expense.model.Category;
 import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
 import com.marwan.dev.expense_tracker.domain.expense.repository.ExpenseRepository;
+import com.marwan.dev.expense_tracker.shared.CommandInterface;
 import org.springframework.stereotype.Service;
 
 /**

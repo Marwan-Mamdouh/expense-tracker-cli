@@ -1,4 +1,4 @@
-package com.marwan.dev.expense_tracker;
+package com.marwan.dev.expense_tracker.shared;
 
 public interface CommandInterface<I, O> {
 
