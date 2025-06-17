@@ -2,15 +2,14 @@ package com.marwan.dev.expense_tracker.domain.expense.repository;
 
 import static com.marwan.dev.expense_tracker.util.LockUtils.withReadLock;
 import static com.marwan.dev.expense_tracker.util.LockUtils.withWriteLock;
+import static com.marwan.dev.expense_tracker.util.ReadAndWriteUtil.readFromFile;
+import static com.marwan.dev.expense_tracker.util.ReadAndWriteUtil.writeToFile;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marwan.dev.expense_tracker.domain.expense.model.Category;
 import com.marwan.dev.expense_tracker.domain.expense.model.Expense;
 import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
 import jakarta.annotation.PostConstruct;
-import java.io.File;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +24,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class ExpenseRepository {
 
-  private static int maxId = 0;
+  private static Integer maxId = 0;
   private final ReadWriteLock lock;
   private final ObjectMapper objectMapper;
   private final String filePath = String.format("%s/expense-tracker/expense.json",
@@ -47,7 +46,7 @@ public class ExpenseRepository {
    */
   @PostConstruct
   public void initializeMaxId() {
-    final var expenses = readExpenseFromFile();
+    final List<Expense> expenses = readExpenseFromFile();
     maxId = expenses.stream().mapToInt(Expense::getId).max().orElse(0);
   }
 
@@ -173,16 +172,7 @@ public class ExpenseRepository {
   // ================== PRIVATE HELPERS ==================
 
   private List<Expense> readExpenseFromFile() {
-    try {
-      final var file = new File(filePath);
-      if (!file.exists()) {
-        return new ArrayList<>();
-      }
-      return objectMapper.readValue(file, new TypeReference<ArrayList<Expense>>() {
-      });
-    } catch (IOException e) {
-      throw new RuntimeException("Error reading from file", e);
-    }
+    return readFromFile(filePath, objectMapper, Expense.class);
   }
 
   private Optional<Expense> findExpenseById(List<Expense> expenses, int id) {
@@ -212,12 +202,6 @@ public class ExpenseRepository {
   }
 
   private void writeExpensesToFile(List<Expense> expenses) {
-    try {
-      final var file = new File(filePath);
-      file.getParentFile().mkdirs();
-      objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, expenses);
-    } catch (IOException e) {
-      throw new RuntimeException("Error writing expenses to file: ", e);
-    }
+    writeToFile(filePath, objectMapper, expenses);
   }
 }

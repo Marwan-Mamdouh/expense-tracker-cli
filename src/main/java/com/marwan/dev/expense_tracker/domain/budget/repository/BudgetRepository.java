@@ -2,14 +2,13 @@ package com.marwan.dev.expense_tracker.domain.budget.repository;
 
 import static com.marwan.dev.expense_tracker.util.LockUtils.withReadLock;
 import static com.marwan.dev.expense_tracker.util.LockUtils.withWriteLock;
+import static com.marwan.dev.expense_tracker.util.ReadAndWriteUtil.readFromFile;
+import static com.marwan.dev.expense_tracker.util.ReadAndWriteUtil.writeToFile;
 import static java.util.stream.Collectors.toList;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marwan.dev.expense_tracker.domain.budget.model.Budget;
 import com.marwan.dev.expense_tracker.util.LockUtils;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -96,31 +95,12 @@ public class BudgetRepository {
    * @return list of budgets
    */
   private List<Budget> readBudgetFromFile() {
-    try {
-      File file = new File(filePath);
-      if (!file.exists()) {
-        return new ArrayList<>();
-      }
-      return mapper.readValue(file, new TypeReference<>() {
-      });
-    } catch (IOException e) {
-      throw new RuntimeException("Error reading from file", e);
-    }
+    return readFromFile(filePath, mapper, Budget.class);
   }
 
-  /**
-   * Utility: Write the list of budgets to the JSON file.
-   *
-   * @param budgets list to write
-   */
+
   private void writeBudgetToFile(List<Budget> budgets) {
-    try {
-      File file = new File(filePath);
-      file.getParentFile().mkdirs();
-      mapper.writerWithDefaultPrettyPrinter().writeValue(file, budgets);
-    } catch (IOException e) {
-      throw new RuntimeException("Error writing budgets to file", e);
-    }
+    writeToFile(filePath, mapper, budgets);
   }
 
   /**
