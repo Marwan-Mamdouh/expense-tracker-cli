@@ -1,6 +1,5 @@
 package com.marwan.dev.expense_tracker.domain.expense.service;
 
-import com.marwan.dev.expense_tracker.CommandInterface;
 import com.marwan.dev.expense_tracker.domain.budget.model.Budget;
 import com.marwan.dev.expense_tracker.domain.budget.model.dto.SearchArgsForBudget;
 import com.marwan.dev.expense_tracker.domain.budget.service.GetBudgetService;
@@ -10,6 +9,7 @@ import com.marwan.dev.expense_tracker.domain.expense.model.dto.CreateExpenseRequ
 import com.marwan.dev.expense_tracker.domain.expense.model.dto.CreateExpenseResponse;
 import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
 import com.marwan.dev.expense_tracker.domain.expense.repository.ExpenseRepository;
+import com.marwan.dev.expense_tracker.shared.CommandInterface;
 import java.time.LocalDate;
 import org.springframework.stereotype.Service;
 
