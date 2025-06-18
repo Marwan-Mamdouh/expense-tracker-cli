@@ -1,6 +1,6 @@
 package com.marwan.dev.expense_tracker.domain.expense.model;
 
-import com.marwan.dev.expense_tracker.exceptions.expense.CategoryNotFoundException;
+import com.marwan.dev.expense_tracker.shared.exceptions.expense.CategoryNotFoundException;
 
 public enum Category {
   FOOD, FRUITS, INTERNET_BILL, TELEPHONE_BILL, ELECTRICITY_BILL, WATER_bill, GAS_BILL, CLEANING, GARBAGE, DEBTS, OTHER;
