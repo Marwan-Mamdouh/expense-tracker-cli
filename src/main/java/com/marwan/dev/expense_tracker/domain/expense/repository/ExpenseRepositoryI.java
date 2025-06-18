@@ -2,7 +2,6 @@ package com.marwan.dev.expense_tracker.domain.expense.repository;
 
 import com.marwan.dev.expense_tracker.domain.expense.model.Category;
 import com.marwan.dev.expense_tracker.domain.expense.model.Expense;
-import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,7 +17,7 @@ public interface ExpenseRepositoryI {
 
   List<Expense> findByCategory(Category category);
 
-  List<Expense> findByMonthAndCategory(SearchArgsForList args);
+  List<Expense> findByMonthAndCategory(Integer month, Category category);
 
   List<Expense> findAll();
 
@@ -26,7 +25,7 @@ public interface ExpenseRepositoryI {
 
   Double summeryByCategory(Category category);
 
-  Double summeryByMonthAndCategory(SearchArgsForList args);
+  Double summeryByMonthAndCategory(Integer month, Category category);
 
   Double summeryAll();
 

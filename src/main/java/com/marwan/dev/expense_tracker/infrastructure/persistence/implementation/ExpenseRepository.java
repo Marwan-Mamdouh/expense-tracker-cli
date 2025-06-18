@@ -2,14 +2,11 @@ package com.marwan.dev.expense_tracker.infrastructure.persistence.implementation
 
 import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.LockUtils.withReadLock;
 import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.LockUtils.withWriteLock;
-import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.ReadAndWriteUtil.readFromFile;
-import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.ReadAndWriteUtil.writeToFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marwan.dev.expense_tracker.domain.expense.model.Category;
 import com.marwan.dev.expense_tracker.domain.expense.model.Expense;
-import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
 import com.marwan.dev.expense_tracker.domain.expense.repository.ExpenseRepositoryI;
+import com.marwan.dev.expense_tracker.infrastructure.persistence.util.JsonFileHandlerI;
 import jakarta.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -27,18 +24,18 @@ public class ExpenseRepository implements ExpenseRepositoryI {
 
   private static Integer maxId = 0;
   private final ReadWriteLock lock;
-  private final ObjectMapper objectMapper;
+  private final JsonFileHandlerI fileHandler;
   private final String filePath = String.format("%s/expense-tracker/expense.json",
       System.getProperty("user.home"));
 
   /**
    * Constructs a new ExpenseRepository instance.
    *
-   * @param objectMapper the Jackson object mapper for JSON serialization
-   * @param lock         the read-write lock used for thread-safe operations
+   * @param lock        the read-write lock used for thread-safe operations
+   * @param fileHandler the Jackson object mapper for JSON serialization
    */
-  public ExpenseRepository(ObjectMapper objectMapper, ReadWriteLock lock) {
-    this.objectMapper = objectMapper;
+  public ExpenseRepository(ReadWriteLock lock, JsonFileHandlerI fileHandler) {
+    this.fileHandler = fileHandler;
     this.lock = lock;
   }
 
@@ -69,7 +66,7 @@ public class ExpenseRepository implements ExpenseRepositoryI {
   @Override
   public Expense save(Expense expense) {
     return withWriteLock(lock, () -> {
-      final var expenses = readExpenseFromFile();
+      final var expenses = new ArrayList<>(readExpenseFromFile());
       final var existingExpense = findExpenseById(expenses, expense.getId());
 
       if (existingExpense.isPresent() && expense.getId() != 0) {
@@ -121,10 +118,9 @@ public class ExpenseRepository implements ExpenseRepositoryI {
    * Finds expenses by both month and category.
    */
   @Override
-  public List<Expense> findByMonthAndCategory(SearchArgsForList args) {
-    return findFiltered(
-        expense -> expense.getCategory().equals(Category.from(args.category())) && args.month()
-            .equals(expense.getCreatedAt().getMonthValue()));
+  public List<Expense> findByMonthAndCategory(Integer month, Category category) {
+    return findFiltered(expense -> expense.getCategory().equals(category) && month.equals(
+        expense.getCreatedAt().getMonthValue()));
   }
 
   /**
@@ -155,9 +151,10 @@ public class ExpenseRepository implements ExpenseRepositoryI {
    * Returns the total sum of expenses filtered by both month and category.
    */
   @Override
-  public Double summeryByMonthAndCategory(SearchArgsForList args) {
-    return sumFiltered(expense -> args.month().equals(expense.getCreatedAt().getMonthValue())
-        && expense.getCategory().equals(Category.from(args.category())));
+  public Double summeryByMonthAndCategory(Integer month, Category category) {
+    return sumFiltered(
+        expense -> month.equals(expense.getCreatedAt().getMonthValue()) && expense.getCategory()
+            .equals(category));
   }
 
   /**
@@ -186,7 +183,7 @@ public class ExpenseRepository implements ExpenseRepositoryI {
   // ================== PRIVATE HELPERS ==================
 
   private List<Expense> readExpenseFromFile() {
-    return readFromFile(filePath, objectMapper, Expense.class);
+    return fileHandler.read(filePath, Expense.class);
   }
 
   private Optional<Expense> findExpenseById(List<Expense> expenses, int id) {
@@ -216,6 +213,6 @@ public class ExpenseRepository implements ExpenseRepositoryI {
   }
 
   private void writeExpensesToFile(List<Expense> expenses) {
-    writeToFile(filePath, objectMapper, expenses);
+    fileHandler.write(filePath, expenses);
   }
 }

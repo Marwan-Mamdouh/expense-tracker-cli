@@ -2,7 +2,7 @@ package com.marwan.dev.expense_tracker.domain.budget.service;
 
 import com.marwan.dev.expense_tracker.domain.budget.model.Budget;
 import com.marwan.dev.expense_tracker.domain.budget.model.dto.SearchArgsForBudget;
-import com.marwan.dev.expense_tracker.infrastructure.persistence.implementation.BudgetRepository;
+import com.marwan.dev.expense_tracker.domain.budget.repository.BudgetRepositoryI;
 import com.marwan.dev.expense_tracker.shared.CommandInterface;
 import java.time.LocalDate;
 import java.util.NoSuchElementException;
@@ -18,14 +18,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class GetBudgetService implements CommandInterface<SearchArgsForBudget, Budget> {
 
-  private final BudgetRepository budgetRepository;
+  private final BudgetRepositoryI budgetRepository;
 
   /**
-   * Constructs the GetBudgetService with a given {@link BudgetRepository}.
+   * Constructs the GetBudgetService with a given {@link BudgetRepositoryI}.
    *
    * @param budgetRepository the budget repository used to retrieve budget data
    */
-  public GetBudgetService(BudgetRepository budgetRepository) {
+  public GetBudgetService(BudgetRepositoryI budgetRepository) {
     this.budgetRepository = budgetRepository;
   }
 

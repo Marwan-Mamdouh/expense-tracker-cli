@@ -12,11 +12,9 @@ public interface BudgetRepositoryI {
 
   List<Budget> findByYear(Integer year);
 
+  int count();
+
   void deleteByMonthAndYear(Integer month, Integer year);
 
   void deleteAll();
-
-//  boolean existsById(int id);
-
-//  long count();
 }

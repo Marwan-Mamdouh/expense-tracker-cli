@@ -3,7 +3,7 @@ package com.marwan.dev.expense_tracker.domain.expense.service;
 import com.marwan.dev.expense_tracker.domain.expense.model.Category;
 import com.marwan.dev.expense_tracker.domain.expense.model.Expense;
 import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
-import com.marwan.dev.expense_tracker.infrastructure.persistence.implementation.ExpenseRepository;
+import com.marwan.dev.expense_tracker.domain.expense.repository.ExpenseRepositoryI;
 import com.marwan.dev.expense_tracker.shared.CommandInterface;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -18,14 +18,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class ListExpensesService implements CommandInterface<SearchArgsForList, List<Expense>> {
 
-  private final ExpenseRepository expenseRepository;
+  private final ExpenseRepositoryI expenseRepository;
 
   /**
    * Constructs a new {@code ListExpensesService} with the specified repository.
    *
    * @param expenseRepository the repository used to fetch expense records
    */
-  public ListExpensesService(ExpenseRepository expenseRepository) {
+  public ListExpensesService(ExpenseRepositoryI expenseRepository) {
     this.expenseRepository = expenseRepository;
   }
 
@@ -40,26 +40,26 @@ public class ListExpensesService implements CommandInterface<SearchArgsForList, 
     if (input == null) {
       return expenseRepository.findAll();
     }
-    return handleNullArgsHelper(input.month() == null, input.category() == null, input);
+    return handleNullArgsHelper(input);
   }
 
   /**
    * Helper method that determines which query to use based on the presence of month and category
    * filters.
    *
-   * @param isMonthNull    indicates whether the month filter is null
-   * @param isCategoryNull indicates whether the category filter is null
-   * @param input          the filter arguments
+   * @param input the filter arguments
    * @return a list of expenses matching the specified filters
    */
-  private List<Expense> handleNullArgsHelper(boolean isMonthNull, boolean isCategoryNull,
-      SearchArgsForList input) {
+  private List<Expense> handleNullArgsHelper(SearchArgsForList input) {
+    final boolean isMonthNull = input.month() == null;
+    final boolean isCategoryNull = input.category() == null;
     if (!isMonthNull && isCategoryNull) {
       return expenseRepository.findByMonth(input.month());
     } else if (!isCategoryNull && isMonthNull) {
       return expenseRepository.findByCategory(Category.from(input.category()));
     } else {
-      return expenseRepository.findByMonthAndCategory(input);
+      return expenseRepository.findByMonthAndCategory(input.month(),
+          Category.from(input.category()));
     }
   }
 }

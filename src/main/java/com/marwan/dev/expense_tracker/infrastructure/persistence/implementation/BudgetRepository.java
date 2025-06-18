@@ -2,13 +2,11 @@ package com.marwan.dev.expense_tracker.infrastructure.persistence.implementation
 
 import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.LockUtils.withReadLock;
 import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.LockUtils.withWriteLock;
-import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.ReadAndWriteUtil.readFromFile;
-import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.ReadAndWriteUtil.writeToFile;
 import static java.util.stream.Collectors.toList;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marwan.dev.expense_tracker.domain.budget.model.Budget;
 import com.marwan.dev.expense_tracker.domain.budget.repository.BudgetRepositoryI;
+import com.marwan.dev.expense_tracker.infrastructure.persistence.util.JsonFileHandlerI;
 import com.marwan.dev.expense_tracker.infrastructure.persistence.util.LockUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +18,12 @@ import org.springframework.stereotype.Repository;
 public class BudgetRepository implements BudgetRepositoryI {
 
   private final ReadWriteLock lock;
-  private final ObjectMapper mapper;
+  private final JsonFileHandlerI fileHandler;
   private final String filePath = String.format("%s/expense-tracker/config.json",
       System.getProperty("user.home"));
 
-  public BudgetRepository(ObjectMapper mapper, ReadWriteLock lock) {
-    this.mapper = mapper;
+  public BudgetRepository(ReadWriteLock lock, JsonFileHandlerI fileHandler) {
+    this.fileHandler = fileHandler;
     this.lock = lock;
   }
 
@@ -38,7 +36,7 @@ public class BudgetRepository implements BudgetRepositoryI {
   @Override
   public Budget save(Budget budget) {
     return withWriteLock(lock, () -> {
-      List<Budget> budgets = readBudgetFromFile();
+      final List<Budget> budgets = new ArrayList<>(readBudgetFromFile());
       budgets.removeIf(b -> sameMonthAndYear(b, budget));
       budgets.add(budget);
       writeBudgetToFile(budgets);
@@ -55,8 +53,8 @@ public class BudgetRepository implements BudgetRepositoryI {
    */
   @Override
   public Optional<Budget> findByMonthAndYear(Integer month, Integer year) {
-    return withReadLock(lock, () -> readBudgetFromFile().stream()
-        .filter(e -> e.getMonth().equals(month) && e.getYear().equals(year)).findFirst());
+    return withReadLock(lock, () -> new ArrayList<>(readBudgetFromFile()).stream()
+        .filter(b -> b.getMonth().equals(month) && b.getYear().equals(year)).findFirst());
   }
 
   /**
@@ -68,7 +66,7 @@ public class BudgetRepository implements BudgetRepositoryI {
   @Override
   public List<Budget> findByYear(Integer year) {
     return withReadLock(lock,
-        () -> readBudgetFromFile().stream().filter(e -> year.equals(e.getYear()))
+        () -> new ArrayList<>(readBudgetFromFile()).stream().filter(b -> year.equals(b.getYear()))
             .collect(toList()));
   }
 
@@ -81,7 +79,7 @@ public class BudgetRepository implements BudgetRepositoryI {
   @Override
   public void deleteByMonthAndYear(Integer month, Integer year) {
     LockUtils.withWriteLock(lock, () -> {
-      List<Budget> budgets = readBudgetFromFile();
+      final List<Budget> budgets = new ArrayList<>(readBudgetFromFile());
       budgets.removeIf(b -> b.getMonth().equals(month) && year.equals(b.getYear()));
       writeBudgetToFile(budgets);
     });
@@ -96,17 +94,25 @@ public class BudgetRepository implements BudgetRepositoryI {
   }
 
   /**
+   * Count all budget entries.
+   */
+  @Override
+  public int count() {
+    return readBudgetFromFile().size();
+  }
+
+  /**
    * Utility: Read the list of budgets from the JSON file.
    *
    * @return list of budgets
    */
   private List<Budget> readBudgetFromFile() {
-    return readFromFile(filePath, mapper, Budget.class);
+    return fileHandler.read(filePath, Budget.class);
   }
 
 
   private void writeBudgetToFile(List<Budget> budgets) {
-    writeToFile(filePath, mapper, budgets);
+    fileHandler.write(filePath, budgets);
   }
 
   /**

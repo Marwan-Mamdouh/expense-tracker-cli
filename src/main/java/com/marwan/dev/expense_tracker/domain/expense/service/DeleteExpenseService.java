@@ -1,5 +1,6 @@
 package com.marwan.dev.expense_tracker.domain.expense.service;
 
+import com.marwan.dev.expense_tracker.domain.expense.repository.ExpenseRepositoryI;
 import com.marwan.dev.expense_tracker.infrastructure.persistence.implementation.ExpenseRepository;
 import com.marwan.dev.expense_tracker.shared.CommandInterface;
 import org.springframework.stereotype.Service;
@@ -14,14 +15,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class DeleteExpenseService implements CommandInterface<Integer, String> {
 
-  private final ExpenseRepository expenseRepository;
+  private final ExpenseRepositoryI expenseRepository;
 
   /**
    * Constructs a new {@code DeleteExpenseService} with the specified repository.
    *
    * @param expenseRepository the repository used to delete expense records
    */
-  public DeleteExpenseService(ExpenseRepository expenseRepository) {
+  public DeleteExpenseService(ExpenseRepositoryI expenseRepository) {
     this.expenseRepository = expenseRepository;
   }
 

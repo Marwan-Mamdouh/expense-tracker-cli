@@ -2,6 +2,7 @@ package com.marwan.dev.expense_tracker.domain.budget.service;
 
 import com.marwan.dev.expense_tracker.domain.budget.model.Budget;
 import com.marwan.dev.expense_tracker.domain.budget.model.dto.UpdateBudgetRequest;
+import com.marwan.dev.expense_tracker.domain.budget.repository.BudgetRepositoryI;
 import com.marwan.dev.expense_tracker.infrastructure.persistence.implementation.BudgetRepository;
 import com.marwan.dev.expense_tracker.shared.CommandInterface;
 import org.springframework.stereotype.Service;
@@ -15,20 +16,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class UpdateBudgetService implements CommandInterface<UpdateBudgetRequest, Budget> {
 
-  private final BudgetRepository budgetRepository;
+  private final BudgetRepositoryI budgetRepository;
 
   /**
    * Constructs the UpdateBudgetService with the given {@link BudgetRepository}.
    *
    * @param budgetRepository the budget repository used to persist updated budgets
    */
-  public UpdateBudgetService(BudgetRepository budgetRepository) {
+  public UpdateBudgetService(BudgetRepositoryI budgetRepository) {
     this.budgetRepository = budgetRepository;
   }
 
   /**
    * Executes the update operation by converting the input DTO to a {@link Budget} entity and saving
-   * it using the {@link BudgetRepository}.
+   * it using the {@link BudgetRepositoryI}.
    *
    * @param input the update request containing new budget data
    * @return the updated or newly created budget entity
