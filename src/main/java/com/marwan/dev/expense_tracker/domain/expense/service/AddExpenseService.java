@@ -8,6 +8,7 @@ import com.marwan.dev.expense_tracker.domain.expense.model.Expense;
 import com.marwan.dev.expense_tracker.domain.expense.model.dto.CreateExpenseRequest;
 import com.marwan.dev.expense_tracker.domain.expense.model.dto.CreateExpenseResponse;
 import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
+import com.marwan.dev.expense_tracker.domain.expense.repository.ExpenseRepositoryI;
 import com.marwan.dev.expense_tracker.infrastructure.persistence.implementation.ExpenseRepository;
 import com.marwan.dev.expense_tracker.shared.CommandInterface;
 import java.time.LocalDate;
@@ -23,7 +24,7 @@ public class AddExpenseService implements
   /**
    * Repository for managing expense data.
    */
-  private final ExpenseRepository expenseRepository;
+  private final ExpenseRepositoryI expenseRepository;
 
   /**
    * Service for summarizing expenses.
@@ -42,7 +43,7 @@ public class AddExpenseService implements
    * @param summaryExpensesService service to compute summary of expenses
    * @param getBudgetService       service to retrieve monthly budgets
    */
-  public AddExpenseService(ExpenseRepository expenseRepository,
+  public AddExpenseService(ExpenseRepositoryI expenseRepository,
       SummaryExpensesService summaryExpensesService, GetBudgetService getBudgetService) {
     this.expenseRepository = expenseRepository;
     this.summaryExpensesService = summaryExpensesService;
