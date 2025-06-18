@@ -5,27 +5,26 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
 /**
  * Utility class providing static helper methods for Reading and writing to JSON files.
  * <p>
  * This class is final and cannot be instantiated. It provides two method to read and write.
  */
-public final class ReadAndWriteUtil {
+@Component
+public final class JsonReadWriteUtil implements JsonFileHandler{
 
-  /**
-   * Private constructor to prevent instantiation.
-   */
-  private ReadAndWriteUtil() {
-    // prevent instantiation
-  }
+
 
   /**
    * Utility: Read the list of budgets from the JSON file.
    *
    * @return list of budgets
    */
-  public static <T> List<T> readFromFile(String filePath, ObjectMapper mapper, Class<T> tClass) {
+  @Bean
+  public <T> List<T> read(String filePath, ObjectMapper mapper, Class<T> tClass) {
     try {
       final var file = new File(filePath);
       if (!file.exists()) {
@@ -44,7 +43,8 @@ public final class ReadAndWriteUtil {
    *
    * @param items list to write
    */
-  public static <T> void writeToFile(String filePath, ObjectMapper mapper, List<T> items) {
+  @Bean
+  public <T> void write(String filePath, ObjectMapper mapper, List<T> items) {
     try {
       final var file = new File(filePath);
       file.getParentFile().mkdirs();
