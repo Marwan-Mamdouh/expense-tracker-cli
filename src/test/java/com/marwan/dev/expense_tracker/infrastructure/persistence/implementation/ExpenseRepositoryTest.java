@@ -127,8 +127,9 @@ public class ExpenseRepositoryTest {
   @Test
   void findByMonth_find_expense() {
     // gavin
-    final Expense expense1 = new Expense("test", 500.3, Category.from("food"));
-    final Expense expense2 = new Expense(1, LocalDate.now(), null, "test", 500.3,
+    final Expense expense1 = new Expense(0, LocalDate.of(2025, 6, 16), null, "test", 900.0,
+        Category.from("food"));
+    final Expense expense2 = new Expense(1, LocalDate.of(2025, 6, 15), null, "test", 500.3,
         Category.from("food"));
     final var expenses = List.of(expense1, expense2);
 
@@ -191,8 +192,9 @@ public class ExpenseRepositoryTest {
   @Test
   void findByMonthAndCategory_find_expenses() {
     // gavin
-    final Expense expense1 = new Expense("test", 500.3, Category.from("food"));
-    final Expense expense2 = new Expense(1, LocalDate.now(), null, "test", 500.3,
+    final Expense expense1 = new Expense(0, LocalDate.of(2025, 6, 15), null, "test", 500.3,
+        Category.from("food"));
+    final Expense expense2 = new Expense(1, LocalDate.of(2025, 6, 15), null, "test", 500.3,
         Category.from("food"));
     final var expenses = List.of(expense1, expense2);
 
@@ -207,8 +209,9 @@ public class ExpenseRepositoryTest {
   @Test
   void findByMonthAndCategory_find_one_expense_from_existing_list() {
     // gavin
-    final Expense expense1 = new Expense("test", 500.3, Category.from("INTERNET_BILL"));
-    final Expense expense2 = new Expense(1, LocalDate.now(), null, "test", 500.3,
+    final Expense expense1 = new Expense(0, LocalDate.of(2025, 6, 15), null, "test", 500.3,
+        Category.from("INTERNET_BILL"));
+    final Expense expense2 = new Expense(1, LocalDate.of(2025, 6, 15), null, "test", 500.3,
         Category.from("food"));
     final var expenses = List.of(expense1, expense2);
 
