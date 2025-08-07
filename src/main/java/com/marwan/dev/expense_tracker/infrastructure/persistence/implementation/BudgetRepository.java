@@ -2,7 +2,6 @@ package com.marwan.dev.expense_tracker.infrastructure.persistence.implementation
 
 import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.LockUtils.withReadLock;
 import static com.marwan.dev.expense_tracker.infrastructure.persistence.util.LockUtils.withWriteLock;
-import static java.util.stream.Collectors.toList;
 
 import com.marwan.dev.expense_tracker.domain.budget.model.Budget;
 import com.marwan.dev.expense_tracker.domain.budget.repository.BudgetRepositoryI;
@@ -67,7 +66,7 @@ public class BudgetRepository implements BudgetRepositoryI {
   public List<Budget> findByYear(Integer year) {
     return withReadLock(lock,
         () -> new ArrayList<>(readBudgetFromFile()).stream().filter(b -> year.equals(b.getYear()))
-            .collect(toList()));
+            .toList());
   }
 
   /**

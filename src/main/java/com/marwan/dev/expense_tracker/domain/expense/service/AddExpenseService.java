@@ -9,7 +9,6 @@ import com.marwan.dev.expense_tracker.domain.expense.model.dto.CreateExpenseRequ
 import com.marwan.dev.expense_tracker.domain.expense.model.dto.CreateExpenseResponse;
 import com.marwan.dev.expense_tracker.domain.expense.model.dto.SearchArgsForList;
 import com.marwan.dev.expense_tracker.domain.expense.repository.ExpenseRepositoryI;
-import com.marwan.dev.expense_tracker.infrastructure.persistence.implementation.ExpenseRepository;
 import com.marwan.dev.expense_tracker.shared.CommandInterface;
 import java.time.LocalDate;
 import org.springframework.stereotype.Service;
